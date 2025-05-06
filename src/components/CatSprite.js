@@ -25,8 +25,6 @@ export default function CatSprite() {
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
   };
-
-
   return (
     <div
       ref={spriteRef}

@@ -1,6 +1,49 @@
 import React from "react";
+import { useSprite } from "./SpriteContext";
+import { useRef } from "react";
 export default function DogSprite() {
-  return (
+  const { position, rotation, message, isDraggable, setPosition } = useSprite();
+  const spriteRef = useRef(null);
+  const handleMouseDown = (e) => {
+    if (!isDraggable) return;
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const initialPos = { ...position };
+
+    const onMouseMove = (moveEvent) => {
+      const dx = moveEvent.clientX - startX;
+      const dy = moveEvent.clientY - startY;
+      setPosition({ x: initialPos.x + dx, y: initialPos.y + dy });
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  };
+  return ( <div
+    ref={spriteRef}
+    onMouseDown={handleMouseDown}
+    style={{
+      position: "absolute",
+      transform: `translate(${position.x}px, ${position.y}px) rotate(${rotation}deg)`,
+      transition: "transform 0.1s",
+      cursor: isDraggable ? "grab" : "default",
+      marginTop:"60px"
+    }}
+  >
+  {message?.visible && (
+      <div
+        style={{color:'red'
+        }}
+      >
+        {message.text}
+      </div>
+    )}
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="95.17898101806641"
@@ -47,5 +90,6 @@ export default function DogSprite() {
       <circle fill="#D99E82" cx="3.695" cy="9.804" r=".269" />
       <circle fill="#D99E82" cx="4.1" cy="10.503" r=".269" />
     </svg>
+    </div>
   );
 }
