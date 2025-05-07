@@ -1,31 +1,33 @@
   import React, { useState } from "react";
   import Icon from "./Icon";
   const blocks = [
-    {
-      category: "Events",
-      color: "bg-yellow-500",
-      items: [
-        {
-          label: [
-            "When ",
-            <Icon
-              key="flag"
-              name="flag"
-              size={15}
-              className="text-green-600 mx-1"
-            />,
-            "clicked",
-          ],
-          type: "when_flag_clicked",
-        },
-        { label: ["When this sprite clicked"], type: "when_sprite_clicked" },
-      ],
-    },
+    // {
+    //   category: "Events",
+    //   color: "bg-yellow-500",
+    //   items: [
+    //     {
+    //       label: [
+    //         "When ",
+    //         <Icon
+    //           key="flag"
+    //           name="flag"
+    //           size={15}
+    //           className="text-green-600 mx-1"
+    //         />,
+    //         "clicked",
+    //       ],
+    //       type: "when_flag_clicked",
+    //     },
+    //     { label: ["When this sprite clicked"], type: "when_sprite_clicked" },
+    //   ],
+    // },
     {
       category: "Motion",
       color: "bg-blue-500",
       items: [
-        { label: ["Move 10 steps"], type: "move_steps" },
+        { label: ["Move 10 steps forward"], type: "Move 10 steps forward" },
+        
+        { label: ["Move 10 steps backward"], type: "Move 10 steps backward" },
         {
           label: [
             "Turn ",
