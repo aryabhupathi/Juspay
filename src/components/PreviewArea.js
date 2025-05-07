@@ -1,41 +1,82 @@
 import React, { useRef, useEffect } from "react";
-import { SpriteProvider, useSprite } from "./SpriteContext";
+import { IndividualSpriteProvider, useIndividualSprite } from "./SpriteContext";
 export default function PreviewArea({ selectedSprites, setSelectedSprites }) {
   return (
-    <div className="relative h-full w-full bg-gray-100 overflow-hidden p-4">
+    <div className="relative w-full h-full overflow-y-auto p-4 bg-gray-100">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">Preview Area</h2>
-      {selectedSprites.map((sprite) => (
-        <SpriteWrapper 
-          key={sprite.id} 
-          sprite={sprite} 
-          setSelectedSprites={setSelectedSprites}
-        />
-      ))}
+      <div className="relative w-full">
+        {selectedSprites.map((sprite, index) => (
+          <SpriteWrapper
+            key={sprite.id}
+            sprite={sprite}
+            index={index}
+            setSelectedSprites={setSelectedSprites}
+          />
+        ))}
+      </div>
     </div>
   );
 }
-function SpriteWrapper({ sprite, setSelectedSprites }) {
+function SpriteWrapper({ sprite, index, setSelectedSprites }) {
   const SpriteComponent = sprite.component;
   const actionsRef = useRef(null);
+  const VERTICAL_SPACING = 150;
+  const initialState = {
+    ...sprite.state,
+    position: { x: 0, y: index * VERTICAL_SPACING },
+  };
   useEffect(() => {
-    setSelectedSprites(prev => 
-      prev.map(s => s.id === sprite.id ? { ...s, actionRef: actionsRef.current } : s)
+    setSelectedSprites((prev) =>
+      prev.map((s) =>
+        s.id === sprite.id ? { ...s, actionRef: actionsRef.current } : s
+      )
     );
   }, [sprite.id, setSelectedSprites]);
   return (
-    <SpriteProvider initialState={sprite.state}>
+    <IndividualSpriteProvider initialState={initialState}>
       <ActionsExporter ref={actionsRef}>
-        <SpriteComponent />
+        <SpriteComponent style={{ marginTop: "100px" }} />
       </ActionsExporter>
-    </SpriteProvider>
+    </IndividualSpriteProvider>
   );
 }
 const ActionsExporter = React.forwardRef(({ children }, ref) => {
-  const { move, rotate, showMessage, setIsDraggable } = useSprite();
+  const {
+    move,
+    rotate,
+    showMessage,
+    setIsDraggable,
+    fliph,
+    flipv,
+    reset,
+    togglePause,
+    isPaused,
+  } = useIndividualSprite();
   useEffect(() => {
     if (ref) {
-      ref.current = { move, rotate, showMessage, setIsDraggable };
+      ref.current = {
+        move,
+        rotate,
+        showMessage,
+        setIsDraggable,
+        fliph,
+        flipv,
+        reset,
+        togglePause,
+        isPaused,
+      };
     }
-  }, [move, rotate, showMessage, setIsDraggable, ref]);
+  }, [
+    move,
+    rotate,
+    showMessage,
+    setIsDraggable,
+    fliph,
+    flipv,
+    reset,
+    togglePause,
+    isPaused,
+    ref,
+  ]);
   return <>{children}</>;
 });

@@ -1,37 +1,19 @@
-import React, { useRef } from "react";
-import { useSprite } from "./SpriteContext";
+import React from "react";
+import { useIndividualSprite } from "./SpriteContext";
 export default function BallSprite() {
-  const { position, rotation, message, isDraggable, setPosition } = useSprite();
-  const spriteRef = useRef(null);
-  const handleMouseDown = (e) => {
-    if (!isDraggable) return;
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const initialPos = { ...position };
-    const onMouseMove = (moveEvent) => {
-      const dx = moveEvent.clientX - startX;
-      const dy = moveEvent.clientY - startY;
-      setPosition({ x: initialPos.x + dx, y: initialPos.y + dy });
-    };
-    const onMouseUp = () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    };
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-  };
-  return (
-    <div
-      ref={spriteRef}
-      onMouseDown={handleMouseDown}
-      style={{
-        position: "absolute",
-        transform: `translate(${position.x}px, ${position.y}px) rotate(${rotation}deg)`,
-        transition: "transform 0.1s",
-        cursor: isDraggable ? "grab" : "default",
-        marginTop: "60px",
-      }}
-    >
+  const { position, rotation, message, flipHorizontal, flipVertical } =
+     useIndividualSprite();
+   return (
+     <div className="absolute w-20 h-20"
+       style={{
+         left: position.x,
+         top: position.y,
+         transform: `rotate(${rotation}deg) 
+                     scaleX(${flipHorizontal ? -1 : 1}) 
+                     scaleY(${flipVertical ? -1 : 1})`,
+         transition: "all 0.3s ease",
+       }}
+     >
       {message && (
         <div
           style={{
@@ -59,7 +41,7 @@ export default function BallSprite() {
         viewBox="0 0 128 128"
         aria-hidden="true"
         role="img"
-        class="iconify iconify--noto"
+        className="iconify iconify--noto"
         preserveAspectRatio="xMidYMid meet"
       >
         <path
