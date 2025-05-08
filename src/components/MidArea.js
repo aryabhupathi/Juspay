@@ -3,6 +3,7 @@ import { useSprite } from "./SpriteContext";
 import CatSprite from "./CatSprite";
 import DogSprite from "./DogSprite";
 import BallSprite from "./BallSprite";
+import { IndividualSpriteProvider } from "./SpriteContext";
 export default function MidArea({ selectedSprites, setSelectedSprites }) {
   const spriteOptions = [
     { name: "Cat", component: CatSprite },
@@ -31,12 +32,12 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
           component: selected.component,
           blocks: [],
           hasRun: false,
-          isPaused: false,
           state: {
             position: { x: randomX, y: randomY },
             rotation: 0,
             isDraggable: false,
           },
+          actionRef: null,
         },
       ]);
     }
@@ -49,7 +50,10 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
     setSelectedSprites((prev) =>
       prev.map((sprite) =>
         sprite.id === spriteId
-          ? { ...sprite, blocks: [...sprite.blocks, blockType] }
+          ? {
+              ...sprite,
+              blocks: [...sprite.blocks, { type: blockType, values: {} }],
+            }
           : sprite
       )
     );
@@ -85,76 +89,46 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
   const executeBlocks = async (blocks, spriteId, actions) => {
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i];
-      if (block === "repeat" && i > 0) {
-        const previousBlock = blocks[i - 1];
-        startAction(spriteId, `repeat: ${previousBlock}`);
-        for (let j = 0; j < 5; j++) {
-          if (isSpritePaused(spriteId)) {
-            await waitForUnpause(spriteId);
-          }
-          await executeBlock(previousBlock, actions);
+      if (block.type === "Repeat") {
+        const repeatTimes = Number(block.values.times || 5);
+        const prevBlock = blocks[i - 1];
+        if (!prevBlock) continue;
+        for (let j = 0; j < repeatTimes; j++) {
+          startAction(spriteId, prevBlock.type);
+          await executeBlock(prevBlock, actions);
+          clearAction(spriteId);
           await new Promise((res) => setTimeout(res, 300));
         }
-        clearAction(spriteId);
         continue;
       }
-      startAction(spriteId, block);
-      if (isSpritePaused(spriteId)) {
-        await waitForUnpause(spriteId);
-      }
+      startAction(spriteId, block.type);
       await executeBlock(block, actions);
-      await new Promise((res) => setTimeout(res, 300));
       clearAction(spriteId);
+      await new Promise((res) => setTimeout(res, 300));
     }
   };
-  const isSpritePaused = (spriteId) => {
-    const sprite = selectedSprites.find((s) => s.id === spriteId);
-    return sprite && sprite.actionRef && sprite.actionRef.isPaused;
-  };
-  const waitForUnpause = async (spriteId) => {
-    return new Promise((resolve) => {
-      const checkPaused = () => {
-        if (!isSpritePaused(spriteId)) {
-          resolve();
-        } else {
-          setTimeout(checkPaused, 100);
-        }
-      };
-      checkPaused();
-    });
-  };
   const executeBlock = async (block, actions) => {
-    const { move, rotate, showMessage, fliph, flipv } = actions;
-    switch (block) {
-      case "Move 10 steps forward":
-        move(10);
+    const { move, rotate, say, think, repeat, randomXY, fliph, flipv } =
+      actions;
+    const { type, values = {} } = block;
+    switch (type) {
+      case "Move":
+        move(Number(values.steps));
         break;
-      case "Move 10 steps backward":
-        move(-10);
+      case "Rotate":
+        rotate(Number(values.degrees));
         break;
-      case "Jump 30 steps forward":
-        move(30);
+      case "Say":
+        await say(values.message, Number(values.seconds));
         break;
-      case "Jump 30 steps backward":
-        move(-30);
+      case "Think":
+        await think(values.message, Number(values.seconds));
         break;
-      case "Turn 30 degrees anti clockwise":
-        rotate(-30);
+      case "Repeat":
+        repeat(Number(values.times));
         break;
-      case "Turn 30 degrees clockwise":
-        rotate(30);
-        break;
-      case "say":
-        showMessage("Hello ..");
-        break;
-      case "think":
-        showMessage("Hmm.....");
-        break;
-      case "greet":
-        showMessage("Good Day");
-        break;
-      case "bye":
-        showMessage("See you later");
+      case "Random":
+        randomXY(Number(values.x), Number(values.y));
         break;
       case "fliph":
         fliph();
@@ -176,19 +150,34 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
       )
     );
   };
-  const handleTogglePause = (spriteId) => {
-    const sprite = selectedSprites.find((s) => s.id === spriteId);
-    if (!sprite || !sprite.actionRef) return;
-    sprite.actionRef.togglePause();
-    setSelectedSprites((prev) =>
-      prev.map((s) => (s.id === spriteId ? { ...s, isPaused: !s.isPaused } : s))
-    );
-  };
   const getBlockStyle = (spriteId, block) => ({
-    border: activeActions[spriteId] === block ? "2px solid green" : "none",
-    boxShadow: activeActions[spriteId] === block ? "0 0 10px green" : "none",
+    border: activeActions[spriteId] === block.type ? "2px solid green" : "none",
+    boxShadow:
+      activeActions[spriteId] === block.type ? "0 0 10px green" : "none",
     transition: "box-shadow 0.3s ease",
   });
+  const handleBlockInputChange = (spriteId, blockIndex, field, value) => {
+    setSelectedSprites((prev) =>
+      prev.map((sprite) =>
+        sprite.id === spriteId
+          ? {
+              ...sprite,
+              blocks: sprite.blocks.map((block, i) =>
+                i === blockIndex
+                  ? {
+                      ...block,
+                      values: {
+                        ...block.values,
+                        [field]: value,
+                      },
+                    }
+                  : block
+              ),
+            }
+          : sprite
+      )
+    );
+  };
   return (
     <div className="flex flex-col h-full bg-gray-100">
       <div className="w-full p-6 bg-white overflow-y-auto">
@@ -213,10 +202,13 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
         >
           Run All
         </button>
-        {selectedSprites.length > 0 ? (
-          selectedSprites.map((sprite) => (
+        {selectedSprites.map((sprite) => (
+          <IndividualSpriteProvider
+            key={sprite.id}
+            spriteId={sprite.id}
+            initialState={sprite.state}
+          >
             <div
-              key={sprite.id}
               className="mb-6 p-4 border border-gray-300 rounded bg-gray-50 shadow-sm"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => handleDrop(e, sprite.id)}
@@ -226,28 +218,12 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                   {sprite.name}
                 </h3>
                 <div className="flex space-x-2">
-                  {/* Pause/Play button */}
-                  {sprite.hasRun && (
-                    <button
-                      onClick={() => handleTogglePause(sprite.id)}
-                      className={`px-3 py-1 rounded text-white font-semibold transition ${
-                        sprite.isPaused
-                          ? "bg-green-500 hover:bg-green-600"
-                          : "bg-yellow-500 hover:bg-yellow-600"
-                      }`}
-                    >
-                      {sprite.isPaused ? "Play" : "Pause"}
-                    </button>
-                  )}
-                  {/* Run/Reset button */}
                   <button
                     disabled={sprite.blocks.length === 0}
                     onClick={() => {
-                      if (sprite.hasRun) {
-                        handleReset(sprite.id);
-                      } else {
-                        handleRun(sprite.id);
-                      }
+                      sprite.hasRun
+                        ? handleReset(sprite.id)
+                        : handleRun(sprite.id);
                     }}
                     className={`px-4 py-1 rounded text-white font-semibold transition ${
                       sprite.blocks.length === 0
@@ -261,32 +237,201 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                   </button>
                 </div>
               </div>
-              <div className="space-y-2">
-                {sprite.blocks.length > 0 ? (
-                  sprite.blocks.map((block, blockIndex) => (
-                    <div
-                      key={blockIndex}
-                      onClick={() => handleBlockClick(sprite.id, blockIndex)}
-                      title="Click to remove"
-                      className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md border border-gray-300 shadow-sm cursor-pointer transition"
-                      style={getBlockStyle(sprite.id, block)}
-                    >
-                      {block}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-400 italic">
-                    Drag blocks here for {sprite.name}
-                  </p>
-                )}
+              <div className="space -y-2">
+                {sprite.blocks.map((block, blockIndex) => (
+                  <div
+                    key={blockIndex}
+                    onClick={() => handleBlockClick(sprite.id, blockIndex)}
+                    title="Click to remove"
+                    className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md border border-gray-300 shadow-sm cursor-pointer transition flex items-center space-x-2"
+                    style={getBlockStyle(sprite.id, block)}
+                  >
+                    {block.type === "Move" && (
+                      <>
+                        <span>Move</span>
+                        <input
+                          type="number"
+                          value={block.values.steps || ""}
+                          placeholder="steps"
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) =>
+                            handleBlockInputChange(
+                              sprite.id,
+                              blockIndex,
+                              "steps",
+                              e.target.value
+                            )
+                          }
+                          className="border px-1 w-16 text-center"
+                        />
+                        <span>steps</span>
+                      </>
+                    )}
+                    {block.type === "Rotate" && (
+                      <>
+                        <span>Rotate</span>
+                        <input
+                          type="number"
+                          value={block.values.degrees || ""}
+                          placeholder="degrees"
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) =>
+                            handleBlockInputChange(
+                              sprite.id,
+                              blockIndex,
+                              "degrees",
+                              e.target.value
+                            )
+                          }
+                          className="border px-1 w-16 text-center"
+                        />
+                        <span>degrees</span>
+                      </>
+                    )}
+                    {block.type === "Say" && (
+                      <>
+                        <span>Say</span>
+                        <input
+                          type="text"
+                          value={block.values.message || ""}
+                          placeholder="message"
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) =>
+                            handleBlockInputChange(
+                              sprite.id,
+                              blockIndex,
+                              "message",
+                              e.target.value
+                            )
+                          }
+                          className="border px-1 w-24 text-center"
+                        />
+                        <span>for</span>
+                        <input
+                          type="number"
+                          value={block.values.seconds || ""}
+                          placeholder="seconds"
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) =>
+                            handleBlockInputChange(
+                              sprite.id,
+                              blockIndex,
+                              "seconds",
+                              e.target.value
+                            )
+                          }
+                          className="border px-1 w-16 text-center"
+                        />
+                        <span>sec</span>
+                      </>
+                    )}
+                    {block.type === "Think" && (
+                      <>
+                        <span>Think</span>
+                        <input
+                          type="text"
+                          value={block.values.message || ""}
+                          placeholder="message"
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) =>
+                            handleBlockInputChange(
+                              sprite.id,
+                              blockIndex,
+                              "message",
+                              e.target.value
+                            )
+                          }
+                          className="border px-1 w-24 text-center"
+                        />
+                        <span>for</span>
+                        <input
+                          type="number"
+                          value={block.values.seconds || ""}
+                          placeholder="seconds"
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) =>
+                            handleBlockInputChange(
+                              sprite.id,
+                              blockIndex,
+                              "seconds",
+                              e.target.value
+                            )
+                          }
+                          className="border px-1 w-16 text-center"
+                        />
+                        <span>sec</span>
+                      </>
+                    )}
+                    {block.type === "Random" && (
+                      <>
+                        <span>Move X</span>
+                        <input
+                          type="number"
+                          value={block.values.x || ""}
+                          placeholder="x"
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) =>
+                            handleBlockInputChange(
+                              sprite.id,
+                              blockIndex,
+                              "x",
+                              e.target.value
+                            )
+                          }
+                          className="border px-1 w-16 text-center"
+                        />
+                        <span>and Y</span>
+                        <input
+                          type="number"
+                          value={block.values.y || ""}
+                          placeholder="y"
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) =>
+                            handleBlockInputChange(
+                              sprite.id,
+                              blockIndex,
+                              "y",
+                              e.target.value
+                            )
+                          }
+                          className="border px-1 w-16 text-center"
+                        />
+                      </>
+                    )}
+                    {block.type === "Repeat" && (
+                      <>
+                        <span>Repeat</span>
+                        <input
+                          type="number"
+                          value={block.values.repeat}
+                          placeholder="repeat"
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) =>
+                            handleBlockInputChange(
+                              sprite.id,
+                              blockIndex,
+                              "repeat",
+                              e.target.value
+                            )
+                          }
+                          className="border px-1 w-16 text-center"
+                        />
+                        <span>times</span>
+                      </>
+                    )}
+                    {(block.type === "fliph" || block.type === "flipv") && (
+                      <span>
+                        {block.type === "fliph"
+                          ? "Flip Horizontally"
+                          : "Flip Vertically"}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-          ))
-        ) : (
-          <p className="text-gray-400 italic">
-            No sprites yet. Select a sprite to get started.
-          </p>
-        )}
+          </IndividualSpriteProvider>
+        ))}
       </div>
     </div>
   );

@@ -1,49 +1,28 @@
-
 import React, { useState } from "react";
-import Icon from "./Icon";
 const blocks = [
   {
     category: "Motion",
     color: "bg-blue-500",
     items: [
-      { label: ["Move 10 steps forward"], type: "Move 10 steps forward" },
-      { label: ["Move 10 steps backward"], type: "Move 10 steps backward" },
-      { label: ["Jump 30 steps forward"], type: "Jump 30 steps forward" },
-      { label: ["Jump 30 steps backward"], type: "Jump 30 steps backward" },
-      {
-        label: [
-          "Turn ",
-          <Icon key="undo" name="undo" size={15} className="mx-1" />,
-          "30 degrees",
-        ],
-        type: "Turn 30 degrees anti clockwise",
-      },
-      {
-        label: [
-          "Turn ",
-          <Icon key="redo" name="redo" size={15} className="mx-1" />,
-          "30 degrees",
-        ],
-        type: "Turn 30 degrees clockwise",
-      },
+      { label: ["Move"], type: "Move" },
+      { label: ["Rotate"], type: "Rotate" },
+      { label: ["Move Random"], type: "Random" },
     ],
   },
   {
     category: "Looks",
     color: "bg-purple-500",
     items: [
-      { label: ["Say 'Hello'"], type: "say" },
-      { label: ["Think 'Hmm...'"], type: "think" },
-      { label: ["Greet 'Good Day'"], type: "greet" },
-      { label: ["Say 'Bye'"], type: "bye" },
-      { label: ["Flip Horizontal"], type: "fliph" },
-      { label: ["Flip Vertical"], type: "flipv" },
+      { label: ["Say Something"], type: "Say" },
+      { label: ["Think Something"], type: "Think" },
+      { label: ["Flip Horizontal"], type: "Fliph" },
+      { label: ["Flip Vertical"], type: "Flipv" },
     ],
   },
   {
     category: "Control",
     color: "bg-red-500",
-    items: [{ label: ["Repeat 5 times"], type: "repeat" }],
+    items: [{ label: ["Repeat"], type: "Repeat" }],
   },
 ];
 export default function Sidebar() {

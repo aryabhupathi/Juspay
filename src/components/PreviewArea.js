@@ -20,7 +20,7 @@ export default function PreviewArea({ selectedSprites, setSelectedSprites }) {
 function SpriteWrapper({ sprite, index, setSelectedSprites }) {
   const SpriteComponent = sprite.component;
   const actionsRef = useRef(null);
-  const VERTICAL_SPACING = 150;
+  const VERTICAL_SPACING = 150; // Adjust this value as needed
   const initialState = {
     ...sprite.state,
     position: { x: 0, y: index * VERTICAL_SPACING },
@@ -45,12 +45,12 @@ const ActionsExporter = React.forwardRef(({ children }, ref) => {
     move,
     rotate,
     showMessage,
-    setIsDraggable,
+    say,
+    think,
     fliph,
     flipv,
     reset,
-    togglePause,
-    isPaused,
+    randomXY,
   } = useIndividualSprite();
   useEffect(() => {
     if (ref) {
@@ -58,25 +58,25 @@ const ActionsExporter = React.forwardRef(({ children }, ref) => {
         move,
         rotate,
         showMessage,
-        setIsDraggable,
+        say,
+        think,
         fliph,
         flipv,
         reset,
-        togglePause,
-        isPaused,
+        randomXY,
       };
     }
   }, [
     move,
     rotate,
     showMessage,
-    setIsDraggable,
+    say,
+    think,
     fliph,
     flipv,
     reset,
-    togglePause,
-    isPaused,
     ref,
+    randomXY,
   ]);
   return <>{children}</>;
 });
