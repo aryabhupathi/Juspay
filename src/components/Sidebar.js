@@ -15,8 +15,6 @@ const blocks = [
     items: [
       { label: ["Say Something"], type: "Say" },
       { label: ["Think Something"], type: "Think" },
-      { label: ["Flip Horizontal"], type: "Fliph" },
-      { label: ["Flip Vertical"], type: "Flipv" },
     ],
   },
   {

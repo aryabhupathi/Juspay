@@ -1,5 +1,5 @@
 import React from "react";
-import { useIndividualSprite } from "./SpriteContext";
+import { useIndividualSprite } from "../../context/ActionContext";
 export default function CatSprite() {
   const { position, rotation, message, flipHorizontal, flipVertical } =
     useIndividualSprite();
@@ -10,8 +10,8 @@ export default function CatSprite() {
         left: position.x,
         top: position.y,
         transform: `rotate(${rotation}deg) 
-                   scaleX(${flipHorizontal ? -1 : 1}) 
-                   scaleY(${flipVertical ? -1 : 1})`,
+                    scaleX(${flipHorizontal ? -1 : 1}) 
+                    scaleY(${flipVertical ? -1 : 1})`,
         transition: "all 0.3s ease",
       }}
     >
@@ -32,7 +32,7 @@ export default function CatSprite() {
             zIndex: 10,
           }}
         >
-          {message}
+          {message}...
         </div>
       )}
       <svg

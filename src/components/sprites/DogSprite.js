@@ -1,5 +1,5 @@
 import React from "react";
-import { useIndividualSprite } from "./SpriteContext";
+import { useIndividualSprite } from "../../context/ActionContext";
 export default function DogSprite() {
   const { position, rotation, message, flipHorizontal, flipVertical } =
     useIndividualSprite();

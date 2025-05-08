@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { useSprite } from "./SpriteContext";
-import CatSprite from "./CatSprite";
-import DogSprite from "./DogSprite";
-import BallSprite from "./BallSprite";
-import { IndividualSpriteProvider } from "./SpriteContext";
+import { useSprite } from "../context/SpriteContext";
+import CatSprite from "../components/sprites/CatSprite";
+import DogSprite from "../components/sprites/DogSprite";
+import BallSprite from "../components/sprites/BallSprite";
+import { IndividualSpriteProvider } from "../context/ActionContext";
 export default function MidArea({ selectedSprites, setSelectedSprites }) {
   const spriteOptions = [
     { name: "Cat", component: CatSprite },
@@ -23,23 +23,21 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
       ).length;
       const randomX = Math.floor(Math.random() * 150) + 50;
       const randomY = Math.floor(Math.random() * 150) + 50;
-      setSelectedSprites((prev) => [
-        ...prev,
-        {
-          id: `${selected.name}-${count + 1}`,
-          name: `${selected.name} ${count + 1}`,
-          baseName: selected.name,
-          component: selected.component,
-          blocks: [],
-          hasRun: false,
-          state: {
-            position: { x: randomX, y: randomY },
-            rotation: 0,
-            isDraggable: false,
-          },
-          actionRef: null,
+      const newSprite = {
+        id: `${selected.name}-${count + 1}`,
+        name: `${selected.name} ${count + 1}`,
+        baseName: selected.name,
+        component: selected.component,
+        blocks: [],
+        hasRun: false,
+        state: {
+          position: { x: randomX, y: randomY },
+          rotation: 0,
+          isDraggable: false,
         },
-      ]);
+        actionRef: null,
+      };
+      setSelectedSprites((prev) => [...prev, newSprite]);
     }
     setTimeout(() => setDropdownValue(""), 0);
   };
@@ -76,21 +74,11 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
       .map((sprite) => handleRun(sprite.id));
     Promise.all(promises);
   };
-  const handleRun = async (spriteId) => {
-    const sprite = selectedSprites.find((s) => s.id === spriteId);
-    if (!sprite || !sprite.actionRef) return;
-    const actions = sprite.actionRef;
-    actions.reset();
-    setSelectedSprites((prev) =>
-      prev.map((s) => (s.id === spriteId ? { ...s, hasRun: true } : s))
-    );
-    await executeBlocks(sprite.blocks, spriteId, actions);
-  };
   const executeBlocks = async (blocks, spriteId, actions) => {
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i];
       if (block.type === "Repeat") {
-        const repeatTimes = Number(block.values.times || 5);
+        const repeatTimes = Number(block.values.repeat);
         const prevBlock = blocks[i - 1];
         if (!prevBlock) continue;
         for (let j = 0; j < repeatTimes; j++) {
@@ -178,6 +166,16 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
       )
     );
   };
+  const handleRun = async (spriteId) => {
+    const sprite = selectedSprites.find((s) => s.id === spriteId);
+    if (!sprite || !sprite.actionRef) return;
+    const actions = sprite.actionRef;
+    actions.reset();
+    setSelectedSprites((prev) =>
+      prev.map((s) => (s.id === spriteId ? { ...s, hasRun: true } : s))
+    );
+    await executeBlocks(sprite.blocks, spriteId, actions);
+  };
   return (
     <div className="flex flex-col h-full bg-gray-100">
       <div className="w-full p-6 bg-white overflow-y-auto">
@@ -213,11 +211,11 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => handleDrop(e, sprite.id)}
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-wrap items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-700">
                   {sprite.name}
                 </h3>
-                <div className="flex space-x-2">
+                <div className="mt-2 sm:mt-0">
                   <button
                     disabled={sprite.blocks.length === 0}
                     onClick={() => {
@@ -237,18 +235,17 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                   </button>
                 </div>
               </div>
-              <div className="space -y-2">
+              <div className="space-y-2">
                 {sprite.blocks.map((block, blockIndex) => (
                   <div
                     key={blockIndex}
-                    onClick={() => handleBlockClick(sprite.id, blockIndex)}
                     title="Click to remove"
-                    className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md border border-gray-300 shadow-sm cursor-pointer transition flex items-center space-x-2"
+                    className="flex flex-wrap items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md border border-gray-300 shadow-sm cursor-pointer transition group"
                     style={getBlockStyle(sprite.id, block)}
                   >
                     {block.type === "Move" && (
                       <>
-                        <span>Move</span>
+                        <span className="mr-2">Move</span>
                         <input
                           type="number"
                           value={block.values.steps || ""}
@@ -262,14 +259,14 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                               e.target.value
                             )
                           }
-                          className="border px-1 w-16 text-center"
+                          className="border px-2 w-16 text-center mr-2"
                         />
-                        <span>steps</span>
+                        <span className="mr-2">steps</span>
                       </>
                     )}
                     {block.type === "Rotate" && (
                       <>
-                        <span>Rotate</span>
+                        <span className="mr-2">Rotate</span>
                         <input
                           type="number"
                           value={block.values.degrees || ""}
@@ -283,14 +280,14 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                               e.target.value
                             )
                           }
-                          className="border px-1 w-16 text-center"
+                          className="border px-2 w-16 text-center mr-2"
                         />
-                        <span>degrees</span>
+                        <span className="mr-2">degrees</span>
                       </>
                     )}
                     {block.type === "Say" && (
                       <>
-                        <span>Say</span>
+                        <span className="mr-2">Say</span>
                         <input
                           type="text"
                           value={block.values.message || ""}
@@ -304,9 +301,9 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                               e.target.value
                             )
                           }
-                          className="border px-1 w-24 text-center"
+                          className="border px-2 w-24 text-center mr-2"
                         />
-                        <span>for</span>
+                        <span className="mr-2">for</span>
                         <input
                           type="number"
                           value={block.values.seconds || ""}
@@ -320,14 +317,14 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                               e.target.value
                             )
                           }
-                          className="border px-1 w-16 text-center"
+                          className="border px-2 w-16 text-center mr-2"
                         />
-                        <span>sec</span>
+                        <span className="mr-2">sec</span>
                       </>
                     )}
                     {block.type === "Think" && (
                       <>
-                        <span>Think</span>
+                        <span className="mr-2">Think</span>
                         <input
                           type="text"
                           value={block.values.message || ""}
@@ -341,9 +338,9 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                               e.target.value
                             )
                           }
-                          className="border px-1 w-24 text-center"
+                          className="border px-2 w-24 text-center mr-2"
                         />
-                        <span>for</span>
+                        <span className="mr-2">for</span>
                         <input
                           type="number"
                           value={block.values.seconds || ""}
@@ -357,14 +354,14 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                               e.target.value
                             )
                           }
-                          className="border px-1 w-16 text-center"
+                          className="border px-2 w-16 text-center mr-2"
                         />
-                        <span>sec</span>
+                        <span className="mr-2">sec</span>
                       </>
                     )}
                     {block.type === "Random" && (
                       <>
-                        <span>Move X</span>
+                        <span className="mr-2">Move X</span>
                         <input
                           type="number"
                           value={block.values.x || ""}
@@ -378,9 +375,9 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                               e.target.value
                             )
                           }
-                          className="border px-1 w-16 text-center"
+                          className="border px-2 w-16 text-center mr-2"
                         />
-                        <span>and Y</span>
+                        <span className="mr-2">and Y</span>
                         <input
                           type="number"
                           value={block.values.y || ""}
@@ -394,16 +391,16 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                               e.target.value
                             )
                           }
-                          className="border px-1 w-16 text-center"
+                          className="border px-2 w-16 text-center mr-2"
                         />
                       </>
                     )}
                     {block.type === "Repeat" && (
                       <>
-                        <span>Repeat</span>
+                        <span className="mr-2">Repeat</span>
                         <input
                           type="number"
-                          value={block.values.repeat}
+                          value={block.values.repeat || ""}
                           placeholder="repeat"
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) =>
@@ -414,18 +411,21 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                               e.target.value
                             )
                           }
-                          className="border px-1 w-16 text-center"
+                          className="border px-2 w-16 text-center mr-2"
                         />
-                        <span>times</span>
+                        <span className="mr-2">times</span>
                       </>
                     )}
-                    {(block.type === "fliph" || block.type === "flipv") && (
-                      <span>
-                        {block.type === "fliph"
-                          ? "Flip Horizontally"
-                          : "Flip Vertically"}
-                      </span>
-                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBlockClick(sprite.id, blockIndex);
+                      }}
+                      className="ml-auto text-red-600 hover:text-red-800 font-bold transition"
+                      title="Remove this block"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 ))}
               </div>

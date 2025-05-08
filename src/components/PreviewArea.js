@@ -1,5 +1,8 @@
 import React, { useRef, useEffect } from "react";
-import { IndividualSpriteProvider, useIndividualSprite } from "./SpriteContext";
+import {
+  useIndividualSprite,
+  IndividualSpriteProvider,
+} from "../context/ActionContext";
 export default function PreviewArea({ selectedSprites, setSelectedSprites }) {
   return (
     <div className="relative w-full h-full overflow-y-auto p-4 bg-gray-100">
@@ -20,7 +23,7 @@ export default function PreviewArea({ selectedSprites, setSelectedSprites }) {
 function SpriteWrapper({ sprite, index, setSelectedSprites }) {
   const SpriteComponent = sprite.component;
   const actionsRef = useRef(null);
-  const VERTICAL_SPACING = 150; // Adjust this value as needed
+  const VERTICAL_SPACING = 150;
   const initialState = {
     ...sprite.state,
     position: { x: 0, y: index * VERTICAL_SPACING },
@@ -41,17 +44,8 @@ function SpriteWrapper({ sprite, index, setSelectedSprites }) {
   );
 }
 const ActionsExporter = React.forwardRef(({ children }, ref) => {
-  const {
-    move,
-    rotate,
-    showMessage,
-    say,
-    think,
-    fliph,
-    flipv,
-    reset,
-    randomXY,
-  } = useIndividualSprite();
+  const { move, rotate, showMessage, say, think, reset, randomXY } =
+    useIndividualSprite();
   useEffect(() => {
     if (ref) {
       ref.current = {
@@ -60,23 +54,10 @@ const ActionsExporter = React.forwardRef(({ children }, ref) => {
         showMessage,
         say,
         think,
-        fliph,
-        flipv,
         reset,
         randomXY,
       };
     }
-  }, [
-    move,
-    rotate,
-    showMessage,
-    say,
-    think,
-    fliph,
-    flipv,
-    reset,
-    ref,
-    randomXY,
-  ]);
+  }, [move, rotate, showMessage, say, think, reset, ref, randomXY]);
   return <>{children}</>;
 });

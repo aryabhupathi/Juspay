@@ -1,34 +1,34 @@
 import React from "react";
-import { useIndividualSprite } from "./SpriteContext";
+import { useIndividualSprite } from "../../context/ActionContext";
 export default function BallSprite() {
   const { position, rotation, message, flipHorizontal, flipVertical } =
-     useIndividualSprite();
-   return (
+    useIndividualSprite();
+  return (
     <div
-    className="absolute w-20 h-20 "
-    style={{
-      left: position.x,
-      top: position.y,
-      transform: `rotate(${rotation}deg) 
+      className="absolute w-20 h-20 "
+      style={{
+        left: position.x,
+        top: position.y,
+        transform: `rotate(${rotation}deg) 
                  scaleX(${flipHorizontal ? -1 : 1}) 
                  scaleY(${flipVertical ? -1 : 1})`,
-      transition: "all 0.3s ease",
-    }}
-  >
+        transition: "all 0.3s ease",
+      }}
+    >
       {message && (
         <div
           style={{
-            color: 'red',
-            position: 'absolute',
-            top: '-30px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            backgroundColor: 'white',
-            padding: '5px',
-            borderRadius: '5px',
-            boxShadow: '0 0 5px rgba(0, 0, 0, 0.2)',
+            color: "red",
+            position: "absolute",
+            top: "-30px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            fontSize: "14px",
+            fontWeight: "bold",
+            backgroundColor: "white",
+            padding: "5px",
+            borderRadius: "5px",
+            boxShadow: "0 0 5px rgba(0, 0, 0, 0.2)",
             zIndex: 10,
           }}
         >
