@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 const blocks = [
   {
     category: "Motion",
@@ -6,7 +7,7 @@ const blocks = [
     items: [
       { label: ["Move"], type: "Move" },
       { label: ["Rotate"], type: "Rotate" },
-      { label: ["Move Random"], type: "Random" },
+      { label: ["Move Random"], type: "Random" }, 
     ],
   },
   {
@@ -20,23 +21,32 @@ const blocks = [
   {
     category: "Control",
     color: "bg-red-500",
-    items: [{ label: ["Repeat"], type: "Repeat" }],
+    items: [
+      { label: ["Repeat"], type: "Repeat" }
+    ],
   },
 ];
+
 export default function Sidebar() {
-  const [openCategories, setOpenCategories] = useState(() =>
-    Object.fromEntries(blocks.map((block) => [block.category, true]))
-  );
-  const toggleCategory = (category) => {
-    setOpenCategories((prev) => ({
+  const [openCategories, setOpenCategories] = useState(() => {
+    const initialState = {};
+    blocks.forEach(block => {
+      initialState[block.category] = true;
+    });
+    return initialState;
+  });
+
+  const toggleCategory = (cat) => {
+    setOpenCategories(prev => ({
       ...prev,
-      [category]: !prev[category],
+      [cat]: !prev[cat]
     }));
   };
+
   const handleDragStart = (e, blockType) => {
-    e.dataTransfer
-    .setData("blockType", blockType);
+    e.dataTransfer.setData("blockType", blockType);
   };
+
   return (
     <div className="w-100 flex-none h-full overflow-y-auto p-3 border-r border-gray-200 bg-gray-50">
       {blocks.map(({ category, color, items }) => (
@@ -50,6 +60,7 @@ export default function Sidebar() {
               {openCategories[category] ? "−" : "+"}
             </span>
           </div>
+
           {openCategories[category] && (
             <div className="px-2 py-2">
               {items.map(({ label, type }, idx) => (

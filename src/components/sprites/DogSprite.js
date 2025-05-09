@@ -37,8 +37,8 @@ export default function DogSprite() {
       )}
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="95.17898101806641"
-        height="100.04156036376953"
+        width="100%"
+        height="100%"
         viewBox="0 0 36 36"
         aria-hidden="true"
         role="img"

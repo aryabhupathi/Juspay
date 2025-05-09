@@ -37,8 +37,8 @@ export default function BallSprite() {
       )}
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="95.17898101806641"
-        height="100.04156036376953"
+        width="50%"
+        height="50%"
         viewBox="0 0 128 128"
         aria-hidden="true"
         role="img"
