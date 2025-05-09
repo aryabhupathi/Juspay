@@ -19,7 +19,6 @@
 //   },
 // ]);
 
-
 const path = require("path");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
@@ -27,16 +26,16 @@ module.exports = {
   entry: {
     main: "./src/index.js", // renamed entry point to "main"
   },
-output: {
-  filename: "app.js",
-  path: path.resolve(__dirname, "dist"),
-},
+  output: {
+    filename: "app.js",
+    path: path.resolve(__dirname, "build"),
+  },
 
-plugins: [
-  new MiniCssExtractPlugin({
-    filename: "app.css",
-  }),
-],
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: "app.css",
+    }),
+  ],
   module: {
     rules: [
       {
