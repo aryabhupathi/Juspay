@@ -18,10 +18,9 @@
 //     },
 //   },
 // ]);
-
 const path = require("path");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin"); // add this
 
 module.exports = {
   entry: {
@@ -33,16 +32,17 @@ module.exports = {
     clean: true, // Ensures old files are removed on each build
   },
 
-  plugins: [
-    new MiniCssExtractPlugin({
-      filename: "app.css",
-    }),
-    new HtmlWebpackPlugin({
-      template: "./src/index.html", // Your source HTML file
-      filename: "index.html",       // Output name in build folder
-      inject: true,
-    }),
-  ],
+ plugins: [
+  new MiniCssExtractPlugin({ filename: "app.css" }),
+  new CopyWebpackPlugin({
+    patterns: [
+      {
+        from: path.resolve(__dirname, "public"),
+        to: path.resolve(__dirname, "build"),
+      },
+    ],
+  }),
+],
   module: {
     rules: [
       {
