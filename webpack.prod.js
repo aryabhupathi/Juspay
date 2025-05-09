@@ -28,21 +28,14 @@ module.exports = {
   entry: {
     main: "./src/index.js", // renamed entry point to "main"
   },
- output: {
-  filename: "app.js", // renamed from main.bundle.js
+output: {
+  filename: "app.js",
   path: path.resolve(__dirname, "dist"),
-  clean: true,
-  publicPath: "/",
 },
 
 plugins: [
   new MiniCssExtractPlugin({
-    filename: "app.css", // renamed from main.css
-  }),
-  new CopyWebpackPlugin({
-    patterns: [
-      { from: "public", to: "" }
-    ],
+    filename: "app.css",
   }),
 ],
   module: {
