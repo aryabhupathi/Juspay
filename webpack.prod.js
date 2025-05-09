@@ -28,12 +28,23 @@ module.exports = {
   entry: {
     main: "./src/index.js", // renamed entry point to "main"
   },
-  output: {
-    filename: "[name].bundle.js", // main.bundle.js
-    path: path.resolve(__dirname, "dist"),
-    clean: true,
-    publicPath: "/", // important for routing and asset loading
-  },
+ output: {
+  filename: "app.js", // renamed from main.bundle.js
+  path: path.resolve(__dirname, "dist"),
+  clean: true,
+  publicPath: "/",
+},
+
+plugins: [
+  new MiniCssExtractPlugin({
+    filename: "app.css", // renamed from main.css
+  }),
+  new CopyWebpackPlugin({
+    patterns: [
+      { from: "public", to: "" }
+    ],
+  }),
+],
   module: {
     rules: [
       {
@@ -52,17 +63,17 @@ module.exports = {
       },
     ],
   },
-  plugins: [
-    new MiniCssExtractPlugin({
-      filename: "[name].css", // main.css
-    }),
-    new CopyWebpackPlugin({
-      patterns: [
-        {
-          from: "public", // source folder
-          to: "", // destination (dist root)
-        },
-      ],
-    }),
-  ],
+  // plugins: [
+  //   new MiniCssExtractPlugin({
+  //     filename: "[name].css", // main.css
+  //   }),
+  //   new CopyWebpackPlugin({
+  //     patterns: [
+  //       {
+  //         from: "public", // source folder
+  //         to: "", // destination (dist root)
+  //       },
+  //     ],
+  //   }),
+  // ],
 };
