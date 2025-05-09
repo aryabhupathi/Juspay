@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 const SpriteContext = createContext();
-export function SpriteProvider({ children, initialState = {} }) {
+export function SpriteProvider({ children }) {
   const [activeActions, setActiveActions] = useState({});
   const [spritePositions, setSpritePositions] = useState({});
   const startAction = useCallback((spriteId, actionType) => {
@@ -18,6 +18,13 @@ export function SpriteProvider({ children, initialState = {} }) {
   }, []);
   const updateSpritePosition = useCallback(
     (spriteId, position, size = { width: 80, height: 80 }) => {
+      if (!position || typeof position !== "object") {
+        console.warn(
+          "Invalid position passed to updateSpritePosition",
+          position
+        );
+        return;
+      }
       setSpritePositions((prev) => ({
         ...prev,
         [spriteId]: {
@@ -34,7 +41,6 @@ export function SpriteProvider({ children, initialState = {} }) {
     },
     [spritePositions]
   );
-  console.log(spritePositions, "lllllllllllllllll");
   return (
     <SpriteContext.Provider
       value={{

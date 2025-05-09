@@ -12,6 +12,19 @@ export function IndividualSpriteProvider({
   spriteId,
   initialState = {},
 }) {
+  useEffect(() => {
+    if (!spriteId) {
+      console.error("Missing required prop: 'spriteId'");
+    }
+  }, [spriteId]);
+  useEffect(() => {
+    if (initialState != null && typeof initialState !== "object") {
+      console.warn(
+        "Invalid initialState passed to IndividualSpriteProvider",
+        initialState
+      );
+    }
+  }, [initialState]);
   const { updateSpritePosition } = useSprite();
   const [position, setPosition] = useState(
     initialState.position || { x: 0, y: 0 }
@@ -22,8 +35,6 @@ export function IndividualSpriteProvider({
   const [height, setHeight] = useState(initialState.height || 50);
   const [initialPosition] = useState(initialState.position || { x: 0, y: 0 });
   const [initialRotation] = useState(initialState.rotation || 0);
-  const [initialWidth] = useState(initialState.width || 50);
-  const [initialHeight] = useState(initialState.height || 50);
   useEffect(() => {
     updateSpritePosition(spriteId, position, { width, height });
   }, [spriteId, position, width, height, updateSpritePosition]);

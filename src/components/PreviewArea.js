@@ -3,9 +3,7 @@ import {
   useIndividualSprite,
   IndividualSpriteProvider,
 } from "../context/ActionContext";
-
 export default function PreviewArea({ selectedSprites, setSelectedSprites }) {
-  
   return (
     <div className="relative w-full h-full overflow-auto p-4 bg-gray-100">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">Preview Area</h2>
@@ -22,20 +20,16 @@ export default function PreviewArea({ selectedSprites, setSelectedSprites }) {
     </div>
   );
 }
-
 function SpriteWrapper({ sprite, index, setSelectedSprites }) {
   const SpriteComponent = sprite.component;
   const actionsRef = useRef(null);
-
   const VERTICAL_SPACING = 80;
-
   const initialState = {
     ...sprite.state,
     position: { x: 50, y: index * VERTICAL_SPACING },
     width: 100,
     height: 100,
   };
-
   useEffect(() => {
     setSelectedSprites((prev) =>
       prev.map((s) =>
@@ -43,7 +37,6 @@ function SpriteWrapper({ sprite, index, setSelectedSprites }) {
       )
     );
   }, [sprite.id, setSelectedSprites]);
-
   return (
     <div
       style={{
@@ -64,7 +57,6 @@ function SpriteWrapper({ sprite, index, setSelectedSprites }) {
     </div>
   );
 }
-
 function InnerSpriteComponent({ SpriteComponent, actionsRef }) {
   const {
     position,
@@ -73,27 +65,23 @@ function InnerSpriteComponent({ SpriteComponent, actionsRef }) {
     height,
     move,
     rotate,
-    showMessage,
     say,
     think,
     reset,
     randomXY,
   } = useIndividualSprite();
-
   useEffect(() => {
     if (actionsRef) {
       actionsRef.current = {
         move,
         rotate,
-        showMessage,
         say,
         think,
         reset,
         randomXY,
       };
     }
-  }, [move, rotate, showMessage, say, think, reset, randomXY]);
-
+  }, [move, rotate, say, think, reset, randomXY]);
   return (
     <div
       style={{
@@ -111,24 +99,3 @@ function InnerSpriteComponent({ SpriteComponent, actionsRef }) {
     </div>
   );
 }
-
-const ActionsExporter = React.forwardRef(({ children }, ref) => {
-  const { move, rotate, showMessage, say, think, reset, randomXY } =
-    useIndividualSprite();
-
-  useEffect(() => {
-    if (ref) {
-      ref.current = {
-        move,
-        rotate,
-        showMessage,
-        say,
-        think,
-        reset,
-        randomXY,
-      };
-    }
-  }, [move, rotate, showMessage, say, think, reset, randomXY, ref]);
-
-  return <>{children}</>;
-});

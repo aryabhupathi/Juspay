@@ -1,56 +1,18 @@
-// const { merge } = require("webpack-merge");
-// const common = require("./webpack.common.js");
-// const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
-
-// process.env["NODE_ENV"] = "production";
-
-// module.exports = merge([
-//   common,
-//   {
-//     mode: "production",
-//     optimization: {
-//       minimize: true,
-//       minimizer: [
-//         // For webpack@5 you can use the `...` syntax to extend existing minimizers (i.e. `terser-webpack-plugin`), uncomment the next line
-//         // `...`,
-//         new CssMinimizerPlugin(),
-//       ],
-//     },
-//   },
-// ]);
 const path = require("path");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const CopyWebpackPlugin = require("copy-webpack-plugin"); // add this
-
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 module.exports = {
-  entry: {
-    main: "./src/index.js", // renamed entry point to "main"
-  },
+  mode: "production",
+  entry: "./src/index.js",
   output: {
     filename: "app.js",
     path: path.resolve(__dirname, "build"),
-    clean: true, // Ensures old files are removed on each build
+    clean: true,
   },
-
- plugins: [
-  new MiniCssExtractPlugin({ filename: "app.css" }),
-  new CopyWebpackPlugin({
-    patterns: [
-      {
-        from: path.resolve(__dirname, "public"),
-        to: path.resolve(__dirname, "build"),
-      },
-    ],
-  }),
-],
   module: {
     rules: [
       {
-        test: /\.css$/i,
-        use: [MiniCssExtractPlugin.loader, "css-loader"],
-      },
-      {
-        test: /\.m?js$/,
+        test: /\.js$/,
         exclude: /node_modules/,
         use: {
           loader: "babel-loader",
@@ -59,6 +21,19 @@ module.exports = {
           },
         },
       },
+      {
+        test: /\.css$/,
+        use: [MiniCssExtractPlugin.loader, "css-loader", "postcss-loader"],
+      },
     ],
   },
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: "app.css",
+    }),
+    new HtmlWebpackPlugin({
+      template: "./public/index.html",
+      filename: "index.html",
+    }),
+  ],
 };
