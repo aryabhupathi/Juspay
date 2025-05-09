@@ -21,6 +21,7 @@
 
 const path = require("path");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   entry: {
@@ -29,11 +30,17 @@ module.exports = {
   output: {
     filename: "app.js",
     path: path.resolve(__dirname, "build"),
+    clean: true, // Ensures old files are removed on each build
   },
 
   plugins: [
     new MiniCssExtractPlugin({
       filename: "app.css",
+    }),
+    new HtmlWebpackPlugin({
+      template: "./src/index.html", // Your source HTML file
+      filename: "index.html",       // Output name in build folder
+      inject: true,
     }),
   ],
   module: {
