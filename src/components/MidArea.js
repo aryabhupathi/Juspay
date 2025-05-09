@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSprite } from "../context/SpriteContext";
 import CatSprite from "../components/sprites/CatSprite";
 import DogSprite from "../components/sprites/DogSprite";
@@ -11,7 +11,59 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
     { name: "Ball", component: BallSprite },
   ];
   const [dropdownValue, setDropdownValue] = useState("");
-  const { startAction, clearAction, activeActions } = useSprite();
+  const { startAction, clearAction, activeActions, spritePositions } =
+    useSprite();
+  useEffect(() => {
+    checkCollision();
+  }, [spritePositions]);
+  const [swappedPairs, setSwappedPairs] = useState(new Set());
+  const checkCollision = useCallback(
+    (id1, id2) => {
+      const sprite1 = spritePositions[id1];
+      const sprite2 = spritePositions[id2];
+      if (!sprite1 || !sprite2) return false;
+      const xOverlap =
+        sprite1.x < sprite2.x + sprite2.width &&
+        sprite1.x + sprite1.width > sprite2.x;
+      const yOverlap =
+        sprite1.y < sprite2.y + sprite2.height &&
+        sprite1.y + sprite1.height > sprite2.y;
+      const pairKey = [id1, id2].sort().join("__");
+      if (xOverlap && yOverlap) {
+        if (!swappedPairs.has(pairKey)) {
+          swapAllBlocks(id1, id2);
+          setSwappedPairs((prev) => new Set(prev).add(pairKey));
+        }
+        return true;
+      } else {
+        setSwappedPairs((prev) => {
+          const updated = new Set(prev);
+          updated.delete(pairKey);
+          return updated;
+        });
+      }
+      return false;
+    },
+    [spritePositions, swappedPairs]
+  );
+  const swapAllBlocks = (id1, id2) => {
+    setSelectedSprites((prev) => {
+      const spriteA = prev.find((s) => s.id === id1);
+      const spriteB = prev.find((s) => s.id === id2);
+      if (!spriteA || !spriteB) return prev;
+      const updated = prev.map((sprite) => {
+        if (sprite.id === id1) {
+          return { ...sprite, blocks: spriteB.blocks };
+        } else if (sprite.id === id2) {
+          return { ...sprite, blocks: spriteA.blocks };
+        } else {
+          return sprite;
+        }
+      });
+      return updated;
+    });
+  };
+  const VERTICAL_SPACING = 80;
   const handleSpriteSelect = (e) => {
     const value = e.target.value;
     if (!value) return;
@@ -21,8 +73,8 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
       const count = selectedSprites.filter(
         (s) => s.baseName === selected.name
       ).length;
+      const yPosition = count * VERTICAL_SPACING;
       const randomX = Math.floor(Math.random() * 150) + 50;
-      const randomY = Math.floor(Math.random() * 150) + 50;
       const newSprite = {
         id: `${selected.name}-${count + 1}`,
         name: `${selected.name} ${count + 1}`,
@@ -31,9 +83,11 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
         blocks: [],
         hasRun: false,
         state: {
-          position: { x: randomX, y: randomY },
+          position: { x: randomX, y: yPosition },
           rotation: 0,
           isDraggable: false,
+          width: 120,
+          height: 120,
         },
         actionRef: null,
       };
@@ -85,6 +139,11 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
           startAction(spriteId, prevBlock.type);
           await executeBlock(prevBlock, actions);
           clearAction(spriteId);
+          selectedSprites.forEach((otherSprite) => {
+            if (otherSprite.id !== spriteId) {
+              const isColliding = checkCollision(spriteId, otherSprite.id);
+            }
+          });
           await new Promise((res) => setTimeout(res, 300));
         }
         continue;
@@ -92,6 +151,13 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
       startAction(spriteId, block.type);
       await executeBlock(block, actions);
       clearAction(spriteId);
+      if (block.type === "Move" || block.type === "Random") {
+        selectedSprites.forEach((otherSprite) => {
+          if (otherSprite.id !== spriteId) {
+            const isColliding = checkCollision(spriteId, otherSprite.id);
+          }
+        });
+      }
       await new Promise((res) => setTimeout(res, 300));
     }
   };
@@ -236,198 +302,204 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                 </div>
               </div>
               <div className="space-y-2">
-                {sprite.blocks.map((block, blockIndex) => (
-                  <div
-                    key={blockIndex}
-                    title="Click to remove"
-                    className="flex flex-wrap items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md border border-gray-300 shadow-sm cursor-pointer transition group"
-                    style={getBlockStyle(sprite.id, block)}
-                  >
-                    {block.type === "Move" && (
-                      <>
-                        <span className="mr-2">Move</span>
-                        <input
-                          type="number"
-                          value={block.values.steps || ""}
-                          placeholder="steps"
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) =>
-                            handleBlockInputChange(
-                              sprite.id,
-                              blockIndex,
-                              "steps",
-                              e.target.value
-                            )
-                          }
-                          className="border px-2 w-16 text-center mr-2"
-                        />
-                        <span className="mr-2">steps</span>
-                      </>
-                    )}
-                    {block.type === "Rotate" && (
-                      <>
-                        <span className="mr-2">Rotate</span>
-                        <input
-                          type="number"
-                          value={block.values.degrees || ""}
-                          placeholder="degrees"
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) =>
-                            handleBlockInputChange(
-                              sprite.id,
-                              blockIndex,
-                              "degrees",
-                              e.target.value
-                            )
-                          }
-                          className="border px-2 w-16 text-center mr-2"
-                        />
-                        <span className="mr-2">degrees</span>
-                      </>
-                    )}
-                    {block.type === "Say" && (
-                      <>
-                        <span className="mr-2">Say</span>
-                        <input
-                          type="text"
-                          value={block.values.message || ""}
-                          placeholder="message"
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) =>
-                            handleBlockInputChange(
-                              sprite.id,
-                              blockIndex,
-                              "message",
-                              e.target.value
-                            )
-                          }
-                          className="border px-2 w-24 text-center mr-2"
-                        />
-                        <span className="mr-2">for</span>
-                        <input
-                          type="number"
-                          value={block.values.seconds || ""}
-                          placeholder="seconds"
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) =>
-                            handleBlockInputChange(
-                              sprite.id,
-                              blockIndex,
-                              "seconds",
-                              e.target.value
-                            )
-                          }
-                          className="border px-2 w-16 text-center mr-2"
-                        />
-                        <span className="mr-2">sec</span>
-                      </>
-                    )}
-                    {block.type === "Think" && (
-                      <>
-                        <span className="mr-2">Think</span>
-                        <input
-                          type="text"
-                          value={block.values.message || ""}
-                          placeholder="message"
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) =>
-                            handleBlockInputChange(
-                              sprite.id,
-                              blockIndex,
-                              "message",
-                              e.target.value
-                            )
-                          }
-                          className="border px-2 w-24 text-center mr-2"
-                        />
-                        <span className="mr-2">for</span>
-                        <input
-                          type="number"
-                          value={block.values.seconds || ""}
-                          placeholder="seconds"
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) =>
-                            handleBlockInputChange(
-                              sprite.id,
-                              blockIndex,
-                              "seconds",
-                              e.target.value
-                            )
-                          }
-                          className="border px-2 w-16 text-center mr-2"
-                        />
-                        <span className="mr-2">sec</span>
-                      </>
-                    )}
-                    {block.type === "Random" && (
-                      <>
-                        <span className="mr-2">Move X</span>
-                        <input
-                          type="number"
-                          value={block.values.x || ""}
-                          placeholder="x"
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) =>
-                            handleBlockInputChange(
-                              sprite.id,
-                              blockIndex,
-                              "x",
-                              e.target.value
-                            )
-                          }
-                          className="border px-2 w-16 text-center mr-2"
-                        />
-                        <span className="mr-2">and Y</span>
-                        <input
-                          type="number"
-                          value={block.values.y || ""}
-                          placeholder="y"
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) =>
-                            handleBlockInputChange(
-                              sprite.id,
-                              blockIndex,
-                              "y",
-                              e.target.value
-                            )
-                          }
-                          className="border px-2 w-16 text-center mr-2"
-                        />
-                      </>
-                    )}
-                    {block.type === "Repeat" && (
-                      <>
-                        <span className="mr-2">Repeat</span>
-                        <input
-                          type="number"
-                          value={block.values.repeat || ""}
-                          placeholder="repeat"
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) =>
-                            handleBlockInputChange(
-                              sprite.id,
-                              blockIndex,
-                              "repeat",
-                              e.target.value
-                            )
-                          }
-                          className="border px-2 w-16 text-center mr-2"
-                        />
-                        <span className="mr-2">times</span>
-                      </>
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleBlockClick(sprite.id, blockIndex);
-                      }}
-                      className="ml-auto text-red-600 hover:text-red-800 font-bold transition"
-                      title="Remove this block"
-                    >
-                      Cancel
-                    </button>
+                {sprite.blocks.length === 0 ? (
+                  <div className="text-gray-500 italic text-sm px-3 py-2 bg-gray-100 border border-dashed border-gray-300 rounded">
+                    👉 Drag some actions here to get started.
                   </div>
-                ))}
+                ) : (
+                  sprite.blocks.map((block, blockIndex) => (
+                    <div
+                      key={blockIndex}
+                      title="Click to remove"
+                      className="flex flex-wrap items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md border border-gray-300 shadow-sm cursor-pointer transition group"
+                      style={getBlockStyle(sprite.id, block)}
+                    >
+                      {block.type === "Move" && (
+                        <>
+                          <span className="mr-2">Move</span>
+                          <input
+                            type="number"
+                            value={block.values.steps || ""}
+                            placeholder="steps"
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) =>
+                              handleBlockInputChange(
+                                sprite.id,
+                                blockIndex,
+                                "steps",
+                                e.target.value
+                              )
+                            }
+                            className="border px-2 w-16 text-center mr-2"
+                          />
+                          <span className="mr-2">steps</span>
+                        </>
+                      )}
+                      {block.type === "Rotate" && (
+                        <>
+                          <span className="mr-2">Rotate</span>
+                          <input
+                            type="number"
+                            value={block.values.degrees || ""}
+                            placeholder="degrees"
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) =>
+                              handleBlockInputChange(
+                                sprite.id,
+                                blockIndex,
+                                "degrees",
+                                e.target.value
+                              )
+                            }
+                            className="border px-2 w-16 text-center mr-2"
+                          />
+                          <span className="mr-2">degrees</span>
+                        </>
+                      )}
+                      {block.type === "Say" && (
+                        <>
+                          <span className="mr-2">Say</span>
+                          <input
+                            type="text"
+                            value={block.values.message || ""}
+                            placeholder="message"
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) =>
+                              handleBlockInputChange(
+                                sprite.id,
+                                blockIndex,
+                                "message",
+                                e.target.value
+                              )
+                            }
+                            className="border px-2 w-24 text-center mr-2"
+                          />
+                          <span className="mr-2">for</span>
+                          <input
+                            type="number"
+                            value={block.values.seconds || ""}
+                            placeholder="seconds"
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) =>
+                              handleBlockInputChange(
+                                sprite.id,
+                                blockIndex,
+                                "seconds",
+                                e.target.value
+                              )
+                            }
+                            className="border px-2 w-16 text-center mr-2"
+                          />
+                          <span className="mr-2">sec</span>
+                        </>
+                      )}
+                      {block.type === "Think" && (
+                        <>
+                          <span className="mr-2">Think</span>
+                          <input
+                            type="text"
+                            value={block.values.message || ""}
+                            placeholder="message"
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) =>
+                              handleBlockInputChange(
+                                sprite.id,
+                                blockIndex,
+                                "message",
+                                e.target.value
+                              )
+                            }
+                            className="border px-2 w-24 text-center mr-2"
+                          />
+                          <span className="mr-2">for</span>
+                          <input
+                            type="number"
+                            value={block.values.seconds || ""}
+                            placeholder="seconds"
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) =>
+                              handleBlockInputChange(
+                                sprite.id,
+                                blockIndex,
+                                "seconds",
+                                e.target.value
+                              )
+                            }
+                            className="border px-2 w-16 text-center mr-2"
+                          />
+                          <span className="mr-2">sec</span>
+                        </>
+                      )}
+                      {block.type === "Random" && (
+                        <>
+                          <span className="mr-2">Move X</span>
+                          <input
+                            type="number"
+                            value={block.values.x || ""}
+                            placeholder="x"
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) =>
+                              handleBlockInputChange(
+                                sprite.id,
+                                blockIndex,
+                                "x",
+                                e.target.value
+                              )
+                            }
+                            className="border px-2 w-16 text-center mr-2"
+                          />
+                          <span className="mr-2">and Y</span>
+                          <input
+                            type="number"
+                            value={block.values.y || ""}
+                            placeholder="y"
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) =>
+                              handleBlockInputChange(
+                                sprite.id,
+                                blockIndex,
+                                "y",
+                                e.target.value
+                              )
+                            }
+                            className="border px-2 w-16 text-center mr-2"
+                          />
+                        </>
+                      )}
+                      {block.type === "Repeat" && (
+                        <>
+                          <span className="mr-2">Repeat</span>
+                          <input
+                            type="number"
+                            value={block.values.repeat || ""}
+                            placeholder="repeat"
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) =>
+                              handleBlockInputChange(
+                                sprite.id,
+                                blockIndex,
+                                "repeat",
+                                e.target.value
+                              )
+                            }
+                            className="border px-2 w-16 text-center mr-2"
+                          />
+                          <span className="mr-2">times</span>
+                        </>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleBlockClick(sprite.id, blockIndex);
+                        }}
+                        className="ml-auto text-red-600 hover:text-red-800 font-bold transition"
+                        title="Remove this block"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </IndividualSpriteProvider>

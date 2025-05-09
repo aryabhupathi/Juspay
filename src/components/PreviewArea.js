@@ -23,10 +23,12 @@ export default function PreviewArea({ selectedSprites, setSelectedSprites }) {
 function SpriteWrapper({ sprite, index, setSelectedSprites }) {
   const SpriteComponent = sprite.component;
   const actionsRef = useRef(null);
-  const VERTICAL_SPACING = 150;
+  const VERTICAL_SPACING = 80;
   const initialState = {
     ...sprite.state,
-    position: { x: 0, y: index * VERTICAL_SPACING },
+    position: { x: 50, y: index * VERTICAL_SPACING },
+    width: 100,
+    height: 100,
   };
   useEffect(() => {
     setSelectedSprites((prev) =>
@@ -36,11 +38,68 @@ function SpriteWrapper({ sprite, index, setSelectedSprites }) {
     );
   }, [sprite.id, setSelectedSprites]);
   return (
-    <IndividualSpriteProvider initialState={initialState}>
-      <ActionsExporter ref={actionsRef}>
-        <SpriteComponent style={{ marginTop: "100px" }} />
-      </ActionsExporter>
-    </IndividualSpriteProvider>
+    <div
+      style={{
+        position: "absolute",
+        top: index * VERTICAL_SPACING,
+        left: 0,
+      }}
+    >
+      <IndividualSpriteProvider
+        spriteId={sprite.id}
+        initialState={initialState}
+      >
+        <InnerSpriteComponent
+          SpriteComponent={SpriteComponent}
+          actionsRef={actionsRef}
+        />
+      </IndividualSpriteProvider>
+    </div>
+  );
+}
+function InnerSpriteComponent({ SpriteComponent, actionsRef }) {
+  const {
+    position,
+    rotation,
+    width,
+    height,
+    move,
+    rotate,
+    showMessage,
+    say,
+    think,
+    reset,
+    randomXY,
+  } = useIndividualSprite();
+  useEffect(() => {
+    if (actionsRef) {
+      actionsRef.current = {
+        move,
+        rotate,
+        showMessage,
+        say,
+        think,
+        reset,
+        randomXY,
+      };
+    }
+  }, [move, rotate, showMessage, say, think, reset, randomXY]);
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: position.x,
+        top: position.y,
+        transform: `rotate(${rotation}deg)`,
+        width: `${width}px`,
+        height: `${height}px`,
+        boxSizing: "border-box",
+        border: "2px solid red",
+        pointerEvents: "none",
+      }}
+    >
+      <SpriteComponent />
+    </div>
   );
 }
 const ActionsExporter = React.forwardRef(({ children }, ref) => {

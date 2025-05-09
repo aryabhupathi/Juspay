@@ -5,13 +5,13 @@ export default function BallSprite() {
     useIndividualSprite();
   return (
     <div
-      className="absolute w-20 h-20 "
+      className="w-20 h-20 "
       style={{
         left: position.x,
         top: position.y,
         transform: `rotate(${rotation}deg) 
-                 scaleX(${flipHorizontal ? -1 : 1}) 
-                 scaleY(${flipVertical ? -1 : 1})`,
+                      scaleX(${flipHorizontal ? -1 : 1}) 
+                      scaleY(${flipVertical ? -1 : 1})`,
         transition: "all 0.3s ease",
       }}
     >

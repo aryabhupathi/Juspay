@@ -5,13 +5,13 @@ export default function CatSprite() {
     useIndividualSprite();
   return (
     <div
-      className="absolute w-20 h-20 "
+      className="w-20 h-20 "
       style={{
         left: position.x,
         top: position.y,
         transform: `rotate(${rotation}deg) 
-                    scaleX(${flipHorizontal ? -1 : 1}) 
-                    scaleY(${flipVertical ? -1 : 1})`,
+                      scaleX(${flipHorizontal ? -1 : 1}) 
+                      scaleY(${flipVertical ? -1 : 1})`,
         transition: "all 0.3s ease",
       }}
     >
@@ -37,8 +37,8 @@ export default function CatSprite() {
       )}
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="95.17898101806641"
-        height="100.04156036376953"
+        width="100%"
+        height="100%"
         viewBox="0.3210171699523926 0.3000000357627869 95.17898101806641 100.04156036376953"
         version="1.1"
         xmlSpace="preserve"

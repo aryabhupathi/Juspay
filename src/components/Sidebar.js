@@ -34,7 +34,8 @@ export default function Sidebar() {
     }));
   };
   const handleDragStart = (e, blockType) => {
-    e.dataTransfer.setData("blockType", blockType);
+    e.dataTransfer
+    .setData("blockType", blockType);
   };
   return (
     <div className="w-100 flex-none h-full overflow-y-auto p-3 border-r border-gray-200 bg-gray-50">

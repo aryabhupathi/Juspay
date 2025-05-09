@@ -16,18 +16,25 @@ export function SpriteProvider({ children, initialState = {} }) {
       return newActions;
     });
   }, []);
-  const updateSpritePosition = useCallback((spriteId, position) => {
-    setSpritePositions((prev) => ({
-      ...prev,
-      [spriteId]: position,
-    }));
-  }, []);
+  const updateSpritePosition = useCallback(
+    (spriteId, position, size = { width: 80, height: 80 }) => {
+      setSpritePositions((prev) => ({
+        ...prev,
+        [spriteId]: {
+          ...position,
+          ...size,
+        },
+      }));
+    },
+    []
+  );
   const getSpritePosition = useCallback(
     (spriteId) => {
       return spritePositions[spriteId] || null;
     },
     [spritePositions]
   );
+  console.log(spritePositions, "lllllllllllllllll");
   return (
     <SpriteContext.Provider
       value={{

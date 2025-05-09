@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 import { useSprite } from "./SpriteContext";
 const IndividualSpriteContext = createContext();
 export function IndividualSpriteProvider({
@@ -12,31 +18,32 @@ export function IndividualSpriteProvider({
   );
   const [rotation, setRotation] = useState(initialState.rotation || 0);
   const [message, setMessage] = useState("");
+  const [width, setWidth] = useState(initialState.width || 50);
+  const [height, setHeight] = useState(initialState.height || 50);
   const [initialPosition] = useState(initialState.position || { x: 0, y: 0 });
   const [initialRotation] = useState(initialState.rotation || 0);
-  React.useEffect(() => {
-    updateSpritePosition(spriteId, position);
-  }, [spriteId, position, updateSpritePosition]);
+  const [initialWidth] = useState(initialState.width || 50);
+  const [initialHeight] = useState(initialState.height || 50);
+  useEffect(() => {
+    updateSpritePosition(spriteId, position, { width, height });
+  }, [spriteId, position, width, height, updateSpritePosition]);
   const move = useCallback((delta) => {
-    setPosition((prev) => {
-      const newPos = { x: prev.x + delta, y: prev.y };
-      return newPos;
-    });
+    setPosition((prev) => ({
+      x: prev.x + delta,
+      y: prev.y,
+    }));
   }, []);
   const randomXY = useCallback((deltaX, deltaY) => {
-    setPosition((prev) => {
-      const newPos = { x: prev.x + deltaX, y: prev.y + deltaY };
-      return newPos;
-    });
+    setPosition((prev) => ({
+      x: prev.x + deltaX,
+      y: prev.y + deltaY,
+    }));
   }, []);
   const setAbsolutePosition = useCallback((x, y) => {
     setPosition({ x, y });
   }, []);
   const rotate = useCallback((delta) => {
-    setRotation((prev) => {
-      const newRot = prev + delta;
-      return newRot;
-    });
+    setRotation((prev) => prev + delta);
   }, []);
   const say = useCallback((text) => {
     setMessage(text);
@@ -60,6 +67,8 @@ export function IndividualSpriteProvider({
         position,
         rotation,
         message,
+        width,
+        height,
         move,
         rotate,
         say,

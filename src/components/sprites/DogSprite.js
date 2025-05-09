@@ -5,7 +5,7 @@ export default function DogSprite() {
     useIndividualSprite();
   return (
     <div
-      className="absolute w-20 h-20 "
+      className="w-20 h-20 "
       style={{
         left: position.x,
         top: position.y,
