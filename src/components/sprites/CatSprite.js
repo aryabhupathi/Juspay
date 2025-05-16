@@ -1,7 +1,7 @@
 import React from "react";
 import { useIndividualSprite } from "../../context/ActionContext";
 export default function CatSprite() {
-  const { position, rotation, message, flipHorizontal, flipVertical } =
+  const { position, rotation, message, thinks, flipHorizontal, flipVertical } =
     useIndividualSprite();
   return (
     <div
@@ -18,21 +18,83 @@ export default function CatSprite() {
       {message && (
         <div
           style={{
-            color: "red",
             position: "absolute",
-            top: "-30px",
+            top: "-50px",
             left: "50%",
             transform: "translateX(-50%)",
-            fontSize: "14px",
+            backgroundColor: "#007bff",
+            color: "white",
+            padding: "10px 16px",
+            borderRadius: "20px",
             fontWeight: "bold",
-            backgroundColor: "white",
-            padding: "5px",
-            borderRadius: "5px",
-            boxShadow: "0 0 5px rgba(0, 0, 0, 0.2)",
+            fontSize: "14px",
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
             zIndex: 10,
+            whiteSpace: "nowrap",
           }}
         >
-          {message}...
+          {message}
+          {/* Speech tail */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-10px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "0",
+              height: "0",
+              borderLeft: "8px solid transparent",
+              borderRight: "8px solid transparent",
+              borderTop: "10px solid #007bff",
+            }}
+          />
+        </div>
+      )}
+      {thinks && (
+        <div
+          style={{
+            position: "absolute",
+            top: "-70px",
+            right: "-10px",
+            backgroundColor: "#f1f1f1",
+            color: "#333",
+            padding: "10px 16px",
+            borderRadius: "50% / 40%",
+            fontStyle: "italic",
+            fontWeight: "500",
+            fontSize: "13px",
+            boxShadow:
+              "inset 0 0 5px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.2)",
+            zIndex: 10,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {thinks}
+          {/* Simulated thought trail (smaller circles) */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-10px",
+              right: "15px",
+              width: "8px",
+              height: "8px",
+              backgroundColor: "#f1f1f1",
+              borderRadius: "50%",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-18px",
+              right: "5px",
+              width: "5px",
+              height: "5px",
+              backgroundColor: "#f1f1f1",
+              borderRadius: "50%",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+            }}
+          />
         </div>
       )}
       <svg

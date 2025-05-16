@@ -26,7 +26,7 @@ function SpriteWrapper({ sprite, index, setSelectedSprites }) {
   const VERTICAL_SPACING = 80;
   const initialState = {
     ...sprite.state,
-    position: { x: 50, y: index * VERTICAL_SPACING },
+    position: { x: 0, y: index * VERTICAL_SPACING },
     width: 100,
     height: 100,
   };
@@ -60,10 +60,12 @@ function SpriteWrapper({ sprite, index, setSelectedSprites }) {
 function InnerSpriteComponent({ SpriteComponent, actionsRef }) {
   const {
     position,
+    setAbsolutePosition,
     rotation,
     width,
     height,
-    move,
+    moveX,
+    moveY,
     rotate,
     say,
     think,
@@ -73,7 +75,8 @@ function InnerSpriteComponent({ SpriteComponent, actionsRef }) {
   useEffect(() => {
     if (actionsRef) {
       actionsRef.current = {
-        move,
+        moveX,
+        moveY,
         rotate,
         say,
         think,
@@ -81,9 +84,35 @@ function InnerSpriteComponent({ SpriteComponent, actionsRef }) {
         randomXY,
       };
     }
-  }, [move, rotate, say, think, reset, randomXY]);
+  }, [moveX, moveY, rotate, say, think, reset, randomXY]);
+  const isDragging = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+  const initialPosition = useRef({ x: 0, y: 0 });
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    isDragging.current = true;
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    initialPosition.current = { ...position };
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+  const handleMouseMove = (e) => {
+    if (!isDragging.current) return;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    const newX = Math.max(0, initialPosition.current.x + dx);
+    const newY = Math.max(0, initialPosition.current.y + dy);
+    setAbsolutePosition(newX, newY);
+  };
+  const handleMouseUp = () => {
+    isDragging.current = false;
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
+    console.log(`Sprite dragged to: x=${position.x}, y=${position.y}`);
+  };
   return (
     <div
+      onMouseDown={handleMouseDown}
       style={{
         position: "absolute",
         left: position.x,
@@ -92,7 +121,9 @@ function InnerSpriteComponent({ SpriteComponent, actionsRef }) {
         width: `${width}px`,
         height: `${height}px`,
         boxSizing: "border-box",
-        pointerEvents: "none",
+        pointerEvents: "auto",
+        cursor: "grab",
+        userSelect: "none",
       }}
     >
       <SpriteComponent />

@@ -31,6 +31,7 @@ export function IndividualSpriteProvider({
   );
   const [rotation, setRotation] = useState(initialState.rotation || 0);
   const [message, setMessage] = useState("");
+  const [thinks, setthinks] = useState("");
   const [width, setWidth] = useState(initialState.width || 50);
   const [height, setHeight] = useState(initialState.height || 50);
   const [initialPosition] = useState(initialState.position || { x: 0, y: 0 });
@@ -38,10 +39,16 @@ export function IndividualSpriteProvider({
   useEffect(() => {
     updateSpritePosition(spriteId, position, { width, height });
   }, [spriteId, position, width, height, updateSpritePosition]);
-  const move = useCallback((delta) => {
+  const moveX = useCallback((delta) => {
     setPosition((prev) => ({
       x: prev.x + delta,
       y: prev.y,
+    }));
+  }, []);
+  const moveY = useCallback((delta) => {
+    setPosition((prev) => ({
+      x: prev.x,
+      y: prev.y + delta,
     }));
   }, []);
   const randomXY = useCallback((deltaX, deltaY) => {
@@ -56,18 +63,19 @@ export function IndividualSpriteProvider({
   const rotate = useCallback((delta) => {
     setRotation((prev) => prev + delta);
   }, []);
-  const say = useCallback((text) => {
+  const say = useCallback((text, seconds = 2) => {
     setMessage(text);
-    setTimeout(() => setMessage(""), 2000);
+    setTimeout(() => setMessage(""), seconds * 1000);
   }, []);
-  const think = useCallback((text) => {
-    setMessage(text);
-    setTimeout(() => setMessage(""), 3000);
+  const think = useCallback((text, seconds = 3) => {
+    setthinks(text);
+    setTimeout(() => setthinks(""), seconds * 1000);
   }, []);
   const reset = useCallback(() => {
     setPosition(initialPosition);
     setRotation(initialRotation);
     setMessage("");
+    setthinks("");
   }, [initialPosition, initialRotation]);
   const getCurrentPosition = useCallback(() => {
     return position;
@@ -79,8 +87,10 @@ export function IndividualSpriteProvider({
         rotation,
         message,
         width,
+        thinks,
         height,
-        move,
+        moveX,
+        moveY,
         rotate,
         say,
         think,

@@ -83,6 +83,7 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
         component: selected.component,
         blocks: [],
         hasRun: false,
+        currentBlockIndex: 0,
         state: {
           position: { x: randomX, y: yPosition },
           rotation: 0,
@@ -131,9 +132,9 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
       console.error("Error running sprites:", err)
     );
   };
-  const runBlocks = async (blocks, spriteId, actions) => {
+  const runBlocks = async (blocks, spriteId, actions, startIndex = 0) => {
     if (!blocks || !Array.isArray(blocks)) return;
-    for (let i = 0; i < blocks.length; i++) {
+    for (let i = startIndex; i < blocks.length; i++) {
       const block = blocks[i];
       if (block.type === "Repeat") {
         const repeatTimes = Number(block.values.repeat);
@@ -150,6 +151,11 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
           });
           await new Promise((res) => setTimeout(res, 300));
         }
+        setSelectedSprites((prev) =>
+          prev.map((s) =>
+            s.id === spriteId ? { ...s, currentBlockIndex: i + 1 } : s
+          )
+        );
         continue;
       }
       startAction(spriteId, block.type);
@@ -163,14 +169,22 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
         });
       }
       await new Promise((res) => setTimeout(res, 300));
+      setSelectedSprites((prev) =>
+        prev.map((s) =>
+          s.id === spriteId ? { ...s, currentBlockIndex: i + 1 } : s
+        )
+      );
     }
   };
   const runBlock = async (block, actions) => {
-    const { move, rotate, say, think, randomXY } = actions;
+    const { moveX, moveY, rotate, say, think, randomXY } = actions;
     const { type, values = {} } = block;
     switch (type) {
-      case "Move":
-        move(Number(values.steps));
+      case "MoveX":
+        moveX(Number(values.steps));
+        break;
+      case "MoveY":
+        moveY(Number(values.steps));
         break;
       case "Rotate":
         rotate(Number(values.degrees));
@@ -185,6 +199,7 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
         randomXY(Number(values.x), Number(values.y));
         break;
       default:
+        console.warn("Unknown block type:", type);
         break;
     }
   };
@@ -194,7 +209,9 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
     sprite.actionRef.reset();
     setSelectedSprites((prev) =>
       prev.map((s) =>
-        s.id === spriteId ? { ...s, blocks: [], hasRun: false } : s
+        s.id === spriteId
+          ? { ...s, blocks: [], hasRun: false, currentBlockIndex: 0 }
+          : s
       )
     );
   };
@@ -230,11 +247,15 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
     const sprite = selectedSprites.find((s) => s.id === spriteId);
     if (!sprite || !sprite.actionRef) return;
     const actions = sprite.actionRef;
-    actions.reset();
     setSelectedSprites((prev) =>
       prev.map((s) => (s.id === spriteId ? { ...s, hasRun: true } : s))
     );
-    await runBlocks(sprite.blocks, spriteId, actions);
+    await runBlocks(
+      sprite.blocks,
+      spriteId,
+      actions,
+      sprite.currentBlockIndex || 0
+    );
   };
   return (
     <div className="flex flex-col h-full bg-gray-100">
@@ -295,196 +316,247 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                   </button>
                 </div>
               </div>
-              <div className="space-y-2">
-                {sprite.blocks.length === 0 ? (
-                  <div className="text-gray-500 italic text-sm px-3 py-2 bg-gray-100 border border-dashed border-gray-300 rounded">
-                    Drag some actions here to get started.
-                  </div>
-                ) : (
-                  sprite.blocks.map((block, blockIndex) => (
-                    <div
-                      key={blockIndex}
-                      title="Click to remove"
-                      className="flex flex-wrap items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md border border-gray-300 shadow-sm cursor-pointer transition group"
-                      style={{
-                        border:
-                          activeActions[sprite.id] === block.type
-                            ? "2px solid green"
-                            : "none",
-                        boxShadow:
-                          activeActions[sprite.id] === block.type
-                            ? "0 0 10px green"
-                            : "none",
-                        transition: "box-shadow 0.3s ease",
-                      }}
-                    >
-                      {/* Block rendering logic */}
-                      {block.type === "Move" && (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span>Move</span>
-                          <input
-                            type="number"
-                            value={block.values.steps || ""}
-                            placeholder="steps"
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) =>
-                              handleBlockInputChange(
-                                sprite.id,
-                                blockIndex,
-                                "steps",
-                                e.target.value
-                              )
-                            }
-                            className="border w-full sm:w-16 text-center"
-                          />
-                          <span>steps</span>
-                        </div>
-                      )}
-                      {block.type === "Rotate" && (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span>Rotate</span>
-                          <input
-                            type="number"
-                            value={block.values.degrees || ""}
-                            placeholder="deg"
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) =>
-                              handleBlockInputChange(
-                                sprite.id,
-                                blockIndex,
-                                "degrees",
-                                e.target.value
-                              )
-                            }
-                            className="border w-full sm:w-16 text-center"
-                          />
-                          <span>degrees</span>
-                        </div>
-                      )}
-                      {block.type === "Say" && (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span>Say</span>
-                          <input
-                            type="text"
-                            value={block.values.message || ""}
-                            placeholder="text"
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) =>
-                              handleBlockInputChange(
-                                sprite.id,
-                                blockIndex,
-                                "message",
-                                e.target.value
-                              )
-                            }
-                            className="border w-full sm:w-16 text-center"
-                          />
-                          <span>for</span>
-                          <input
-                            type="number"
-                            value={block.values.seconds || ""}
-                            placeholder="sec"
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) =>
-                              handleBlockInputChange(
-                                sprite.id,
-                                blockIndex,
-                                "seconds",
-                                e.target.value
-                              )
-                            }
-                            className="border w-full sm:w-16 text-center"
-                          />
-                          <span>sec</span>
-                        </div>
-                      )}
-                      {block.type === "Think" && (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span>Think</span>
-                          <input
-                            type="text"
-                            value={block.values.message || ""}
-                            placeholder="text"
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) =>
-                              handleBlockInputChange(
-                                sprite.id,
-                                blockIndex,
-                                "message",
-                                e.target.value
-                              )
-                            }
-                            className="border w-full sm:w-16 text-center"
-                          />
-                          <span>for</span>
-                          <input
-                            type="number"
-                            value={block.values.seconds || ""}
-                            placeholder="sec"
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) =>
-                              handleBlockInputChange(
-                                sprite.id,
-                                blockIndex,
-                                "seconds",
-                                e.target.value
-                              )
-                            }
-                            className="border w-full sm:w-16 text-center"
-                          />
-                          <span>sec</span>
-                        </div>
-                      )}
-                      {block.type === "Random" && (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span>Move X</span>
-                          <input
-                            type="number"
-                            value={block.values.x || ""}
-                            placeholder="x"
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) =>
-                              handleBlockInputChange(
-                                sprite.id,
-                                blockIndex,
-                                "x",
-                                e.target.value
-                              )
-                            }
-                            className="border w-full sm:w-16 text-center"
-                          />
-                          <span>and Y</span>
-                          <input
-                            type="number"
-                            value={block.values.y || ""}
-                            placeholder="y"
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) =>
-                              handleBlockInputChange(
-                                sprite.id,
-                                blockIndex,
-                                "y",
-                                e.target.value
-                              )
-                            }
-                            className="border w-full sm:w-16 text-center"
-                          />
-                        </div>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleBlockClick(sprite.id, blockIndex);
-                        }}
-                        className="ml-auto text-red-600 hover:text-red-800 font-bold transition"
-                        title="Remove this block"
-                      >
-                        <GiCancel />
-                      </button>
+              {sprite.blocks.map((block, blockIndex) => (
+                <div
+                  key={blockIndex}
+                  title="Click to remove"
+                  className="flex flex-wrap items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md border border-gray-300 shadow-sm cursor-pointer transition group"
+                  style={{
+                    border:
+                      activeActions[sprite.id] === block.type
+                        ? "2px solid green"
+                        : "none",
+                    boxShadow:
+                      activeActions[sprite.id] === block.type
+                        ? "0 0 10px green"
+                        : "none",
+                    transition: "box-shadow 0.3s ease",
+                  }}
+                >
+                  {block.type === "MoveX" && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>Move X by</span>
+                      <input
+                        type="number"
+                        value={block.values.steps || ""}
+                        placeholder="steps"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) =>
+                          handleBlockInputChange(
+                            sprite.id,
+                            blockIndex,
+                            "steps",
+                            e.target.value
+                          )
+                        }
+                        className="border w-full sm:w-16 text-center"
+                      />
                     </div>
-                  ))
-                )}
-              </div>
+                  )}
+                  {block.type === "MoveY" && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>Move Y by</span>
+                      <input
+                        type="number"
+                        value={block.values.steps || ""}
+                        placeholder="steps"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) =>
+                          handleBlockInputChange(
+                            sprite.id,
+                            blockIndex,
+                            "steps",
+                            e.target.value
+                          )
+                        }
+                        className="border w-full sm:w-16 text-center"
+                      />
+                    </div>
+                  )}
+                  {block.type === "Rotate" && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>Rotate</span>
+                      <input
+                        type="number"
+                        value={block.values.degrees || ""}
+                        placeholder="degrees"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) =>
+                          handleBlockInputChange(
+                            sprite.id,
+                            blockIndex,
+                            "degrees",
+                            e.target.value
+                          )
+                        }
+                        className="border w-full sm:w-16 text-center"
+                      />
+                      <span>degrees</span>
+                    </div>
+                  )}
+                  {block.type === "Say" && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>Say</span>
+                      <input
+                        type="text"
+                        value={block.values.message || ""}
+                        placeholder="message"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) =>
+                          handleBlockInputChange(
+                            sprite.id,
+                            blockIndex,
+                            "message",
+                            e.target.value
+                          )
+                        }
+                        className="border w-full sm:w-20 text-center"
+                      />
+                      <span>for</span>
+                      <input
+                        type="number"
+                        value={block.values.seconds || ""}
+                        placeholder="sec"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) =>
+                          handleBlockInputChange(
+                            sprite.id,
+                            blockIndex,
+                            "seconds",
+                            e.target.value
+                          )
+                        }
+                        className="border w-full sm:w-16 text-center"
+                      />
+                      <span>sec</span>
+                    </div>
+                  )}
+                  {block.type === "Think" && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>Think</span>
+                      <input
+                        type="text"
+                        value={block.values.message || ""}
+                        placeholder="message"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) =>
+                          handleBlockInputChange(
+                            sprite.id,
+                            blockIndex,
+                            "message",
+                            e.target.value
+                          )
+                        }
+                        className="border w-full sm:w-20 text-center"
+                      />
+                      <span>for</span>
+                      <input
+                        type="number"
+                        value={block.values.seconds || ""}
+                        placeholder="sec"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) =>
+                          handleBlockInputChange(
+                            sprite.id,
+                            blockIndex,
+                            "seconds",
+                            e.target.value
+                          )
+                        }
+                        className="border w-full sm:w-16 text-center"
+                      />
+                      <span>sec</span>
+                    </div>
+                  )}
+                  {block.type === "Random" && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>Move randomly by X:</span>
+                      <input
+                        type="number"
+                        value={block.values.x || ""}
+                        placeholder="x"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) =>
+                          handleBlockInputChange(
+                            sprite.id,
+                            blockIndex,
+                            "x",
+                            e.target.value
+                          )
+                        }
+                        className="border w-full sm:w-16 text-center"
+                      />
+                      <span>and Y:</span>
+                      <input
+                        type="number"
+                        value={block.values.y || ""}
+                        placeholder="y"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) =>
+                          handleBlockInputChange(
+                            sprite.id,
+                            blockIndex,
+                            "y",
+                            e.target.value
+                          )
+                        }
+                        className="border w-full sm:w-16 text-center"
+                      />
+                    </div>
+                  )}
+                  {block.type === "ChangeColor" && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>Change color effect by</span>
+                      <input
+                        type="number"
+                        value={block.values.amount || ""}
+                        placeholder="amount"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) =>
+                          handleBlockInputChange(
+                            sprite.id,
+                            blockIndex,
+                            "amount",
+                            e.target.value
+                          )
+                        }
+                        className="border w-full sm:w-16 text-center"
+                      />
+                    </div>
+                  )}
+                  {block.type === "Repeat" && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>Repeat</span>
+                      <input
+                        type="number"
+                        value={block.values.repeat || ""}
+                        placeholder="times"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) =>
+                          handleBlockInputChange(
+                            sprite.id,
+                            blockIndex,
+                            "repeat",
+                            e.target.value
+                          )
+                        }
+                        className="border w-full sm:w-16 text-center"
+                      />
+                      <span>times</span>
+                    </div>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleBlockClick(sprite.id, blockIndex);
+                    }}
+                    className="ml-auto text-red-600 hover:text-red-800 font-bold transition"
+                    title="Remove this block"
+                  >
+                    <GiCancel />
+                  </button>
+                </div>
+              ))}
             </div>
           </IndividualSpriteProvider>
         ))}
