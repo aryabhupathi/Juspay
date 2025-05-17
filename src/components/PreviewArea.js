@@ -1,26 +1,45 @@
-import React, { useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   useIndividualSprite,
   IndividualSpriteProvider,
 } from "../context/ActionContext";
 export default function PreviewArea({ selectedSprites, setSelectedSprites }) {
+  const containerRef = useRef(null);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setContainerSize({ width: rect.width, height: rect.height });
+      }
+    };
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
+
   return (
-    <div className="relative w-full h-full overflow-auto p-4 bg-gray-100">
+    <div
+      ref={containerRef}
+      className="relative w-full h-full overflow-auto p-4 bg-gray-100"
+    >
       <h2 className="text-xl font-semibold text-gray-800 mb-4">Preview Area</h2>
-      <div className="relative w-full">
+      <div className="relative w-full h-full">
         {selectedSprites.map((sprite, index) => (
           <SpriteWrapper
             key={sprite.id}
             sprite={sprite}
             index={index}
             setSelectedSprites={setSelectedSprites}
+            containerSize={containerSize}
           />
         ))}
       </div>
     </div>
   );
 }
-function SpriteWrapper({ sprite, index, setSelectedSprites }) {
+function SpriteWrapper({ sprite, index, setSelectedSprites, containerSize }) {
   const SpriteComponent = sprite.component;
   const actionsRef = useRef(null);
   const VERTICAL_SPACING = 80;
@@ -37,17 +56,13 @@ function SpriteWrapper({ sprite, index, setSelectedSprites }) {
       )
     );
   }, [sprite.id, setSelectedSprites]);
+
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: index * VERTICAL_SPACING,
-        left: 0,
-      }}
-    >
+    <div style={{ position: "absolute", top: index * 80, left: 0 }}>
       <IndividualSpriteProvider
         spriteId={sprite.id}
         initialState={initialState}
+        containerSize={containerSize} 
       >
         <InnerSpriteComponent
           SpriteComponent={SpriteComponent}
@@ -108,7 +123,6 @@ function InnerSpriteComponent({ SpriteComponent, actionsRef }) {
     isDragging.current = false;
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
-    console.log(`Sprite dragged to: x=${position.x}, y=${position.y}`);
   };
   return (
     <div

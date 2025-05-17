@@ -11,6 +11,7 @@ export function IndividualSpriteProvider({
   children,
   spriteId,
   initialState = {},
+  containerSize = { width: 800, height: 600 },
 }) {
   useEffect(() => {
     if (!spriteId) {
@@ -39,24 +40,38 @@ export function IndividualSpriteProvider({
   useEffect(() => {
     updateSpritePosition(spriteId, position, { width, height });
   }, [spriteId, position, width, height, updateSpritePosition]);
-  const moveX = useCallback((delta) => {
-    setPosition((prev) => ({
-      x: prev.x + delta,
-      y: prev.y,
-    }));
-  }, []);
-  const moveY = useCallback((delta) => {
-    setPosition((prev) => ({
-      x: prev.x,
-      y: prev.y + delta,
-    }));
-  }, []);
-  const randomXY = useCallback((deltaX, deltaY) => {
-    setPosition((prev) => ({
-      x: prev.x + deltaX,
-      y: prev.y + deltaY,
-    }));
-  }, []);
+  const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+
+  const moveX = useCallback(
+    (dx) => {
+      setPosition((prev) => {
+        const newX = clamp(prev.x + dx, 0, containerSize.width - width);
+        return { ...prev, x: newX };
+      });
+    },
+    [containerSize.width, width]
+  );
+
+  const moveY = useCallback(
+    (dy) => {
+      setPosition((prev) => {
+        const newY = clamp(prev.y + dy, 0, containerSize.height - height);
+        return { ...prev, y: newY };
+      });
+    },
+    [containerSize.height, height]
+  );
+
+  const randomXY = useCallback(
+    (dx, dy) => {
+      setPosition((prev) => {
+        const newX = clamp(prev.x + dx, 0, containerSize.width - width);
+        const newY = clamp(prev.y + dy, 0, containerSize.height - height);
+        return { x: newX, y: newY };
+      });
+    },
+    [containerSize, width, height]
+  );
   const setAbsolutePosition = useCallback((x, y) => {
     setPosition({ x, y });
   }, []);

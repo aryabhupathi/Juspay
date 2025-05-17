@@ -215,12 +215,7 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
       )
     );
   };
-  const getBlockStyle = (spriteId, block) => ({
-    border: activeActions[spriteId] === block.type ? "2px solid green" : "none",
-    boxShadow:
-      activeActions[spriteId] === block.type ? "0 0 10px green" : "none",
-    transition: "box-shadow 0.3s ease",
-  });
+
   const handleBlockInputChange = (spriteId, blockIndex, field, value) => {
     setSelectedSprites((prev) =>
       prev.map((sprite) =>
@@ -281,6 +276,11 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
         >
           Run All
         </button>
+        {selectedSprites.length === 0 && (
+          <div className="mb-6 p-4 border border-gray-300 rounded bg-yellow-50 shadow-sm">
+            <p>Select a sprite to continue</p>
+          </div>
+        )}
         {selectedSprites.map((sprite) => (
           <IndividualSpriteProvider
             key={sprite.id}
@@ -316,6 +316,11 @@ export default function MidArea({ selectedSprites, setSelectedSprites }) {
                   </button>
                 </div>
               </div>
+              {sprite.blocks.length === 0 && (
+                <div className="mb-6 p-4 border border-gray-300 rounded bg-yellow-50 shadow-sm">
+                  <p>Drag actions to continue</p>
+                </div>
+              )}
               {sprite.blocks.map((block, blockIndex) => (
                 <div
                   key={blockIndex}
